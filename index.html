@@ -182,24 +182,11 @@ body {
   padding: 3px 10px;
 }
 
-/* Loading state */
-.chat-loading {
-  height: 580px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 1rem;
-  background: var(--off-white);
+/* Chat container for Flowise embed */
+.chat-container {
+  height: 600px;
+  position: relative;
 }
-.chat-spinner {
-  width: 48px; height: 48px;
-  border: 3px solid var(--border);
-  border-top-color: var(--gju-blue);
-  border-radius: 50%; animation: spin 1s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.chat-loading-text { font-size: 14px; color: var(--text-mid); }
-.chat-loading-sub { font-size: 12px; color: var(--text-light); }
-
-/* Iframe */
-.chat-frame { width: 100%; height: 580px; border: none; display: none; }
 
 /* ── FOOTER ── */
 footer {
@@ -220,6 +207,7 @@ footer strong { color: white; }
   .stats, .how { grid-template-columns: repeat(2,1fr); }
   .hero h1 { font-size: 2rem; }
   .nav { padding: 0.75rem 1rem; }
+  .chat-container { height: 500px; }
 }
 </style>
 </head>
@@ -265,7 +253,7 @@ footer strong { color: white; }
 <section class="chat-section">
   <div class="chat-section-label">Start Your Assessment</div>
   <div class="chat-section-title">Talk to Your AI Advisor</div>
-  <div class="chat-section-sub">Powered by Random Forest ML + GPT-4o-mini · No login required</div>
+  <div class="chat-section-sub">Tap a number button to answer each question · No login required</div>
 
   <div class="api-status" id="api-status">
     <div class="api-dot" id="api-dot"></div>
@@ -283,20 +271,7 @@ footer strong { color: white; }
       </div>
       <div class="chat-top-powered">RF + GPT-4o-mini</div>
     </div>
-
-    <div class="chat-loading" id="chat-loading">
-      <div class="chat-spinner"></div>
-      <div class="chat-loading-text">Initializing AI Advisor...</div>
-      <div class="chat-loading-sub">Warming up recommendation engine</div>
-    </div>
-
-    <iframe
-      id="chat-frame"
-      class="chat-frame"
-      src="https://cloud.flowiseai.com/chatbot/03a574a9-2c16-408d-99f2-b14399041da4"
-      allow="microphone"
-      title="GJU Major Advisor">
-    </iframe>
+    <div class="chat-container" id="chat-container"></div>
   </div>
 </section>
 
@@ -312,9 +287,69 @@ footer strong { color: white; }
   </div>
 </footer>
 
-<script>
-const API = 'https://gju-recommendation-api.onrender.com';
+<script type="module">
+  import Chatbot from 'https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js';
 
+  Chatbot.init({
+    chatflowid: '03a574a9-2c16-408d-99f2-b14399041da4',
+    apiHost: 'https://cloud.flowiseai.com',
+    theme: {
+      chatWindow: {
+        showTitle: false,
+        height: 600,
+        backgroundColor: '#f5f7fa',
+        fontSize: 15,
+        clearChatOnReload: true,
+        starterPrompts: [
+          '1 - Strongly Dislike',
+          '2 - Dislike',
+          '3 - Neutral',
+          '4 - Like',
+          '5 - Strongly Like'
+        ],
+        starterPromptFontSize: 13,
+        botMessage: {
+          backgroundColor: '#ffffff',
+          textColor: '#1a2540',
+          showAvatar: false,
+        },
+        userMessage: {
+          backgroundColor: '#3a5faa',
+          textColor: '#ffffff',
+          showAvatar: false,
+        },
+        textInput: {
+          placeholder: 'Or type your answer here...',
+          backgroundColor: '#ffffff',
+          textColor: '#1a2540',
+          sendButtonColor: '#3a5faa',
+          autoFocus: false,
+        },
+        footer: {
+          textColor: '#8898aa',
+          text: 'GJU Major Advisor',
+          company: 'German Jordanian University',
+        }
+      }
+    }
+  });
+
+  // Inject chatbot into our container
+  setTimeout(() => {
+    const flowise = document.querySelector('flowise-chatbot') ||
+                    document.querySelector('flowise-fullchatbot');
+    const container = document.getElementById('chat-container');
+    if (flowise) {
+      flowise.style.height = '600px';
+      flowise.style.width = '100%';
+      container.appendChild(flowise);
+    }
+  }, 500);
+</script>
+
+<script>
+// Wake up Render API
+const API = 'https://gju-recommendation-api.onrender.com';
 async function wakeAPI() {
   try {
     const r = await fetch(API);
@@ -325,23 +360,10 @@ async function wakeAPI() {
       dot.classList.add('ready');
       txt.textContent = '✓ AI systems ready — Start your assessment below!';
       txt.style.color = '#16a34a';
-    } else {
-      txt.textContent = '⚠ AI loading, please wait...';
     }
-  } catch(e) {
-    document.getElementById('api-text').textContent = '⚡ Warming up...';
-  }
+  } catch(e) {}
 }
-
-function loadChat() {
-  setTimeout(() => {
-    document.getElementById('chat-loading').style.display = 'none';
-    document.getElementById('chat-frame').style.display = 'block';
-  }, 2000);
-}
-
 wakeAPI();
-loadChat();
 </script>
 </body>
 </html>
