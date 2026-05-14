@@ -462,14 +462,25 @@ function showResults(pred,rec){
     .sort((a,b)=>b[1]-a[1]).slice(0,3)
     .map(([n,s])=>`<div class="chip">${n}: ${s}/5</div>`).join('');
 
+  // Format the recommendation text beautifully
+  const formattedRec = rec
+    .replace(/🥇 (.*?) — (.*?)\n/g, '<div class="maj-card primary"><div class="maj-rank">🥇 Primary</div><div class="maj-name">$1</div><div class="maj-school">$2</div>')
+    .replace(/🥈 (.*?) — (.*?)\n/g, '</div><div class="maj-card secondary"><div class="maj-rank">🥈 Second</div><div class="maj-name">$1</div><div class="maj-school">$2</div>')
+    .replace(/🥉 (.*?) — (.*?)\n/g, '</div><div class="maj-card third"><div class="maj-rank">🥉 Third</div><div class="maj-name">$1</div><div class="maj-school">$2</div>')
+    .replace(/📌 (.*)/g, '</div><div class="german-note">📌 $1</div>')
+    .replace(/Why it fits you: (.*?)\n/g, '<div class="maj-why"><strong>Why it fits you:</strong> $1</div>')
+    .replace(/Key courses: (.*?)\n/g, '<div class="maj-info"><span class="info-label">📚 Courses:</span> $1</div>')
+    .replace(/Careers: (.*?)\n/g, '<div class="maj-info"><span class="info-label">💼 Careers:</span> $1</div>')
+    .replace(/\n/g, '');
+
   const card=document.createElement('div');
   card.className='res-card';
   card.innerHTML=`
     <div class="res-bar"></div>
-    <div class="res-head">🎓 Your Personalised Recommendations</div>
+    <div class="res-head">🎓 Your Recommendations, ${S.name}</div>
     <div class="ml-tag">🌲 ${pred.predicted_school} · ${pred.predicted_school_confidence} · 83% accuracy</div>
     <div class="chips">${chips}</div>
-    <div class="res-body">${rec}</div>
+    <div class="majors-wrap">${formattedRec}</div>
     <button class="restart-btn" onclick="restart()">↺ Start new assessment</button>`;
   m.appendChild(card);scroll();
 
@@ -488,18 +499,21 @@ async function answerFollowup(q){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         student:{tawjihi:S.tawjihi,is_scientific:S.scientific,name:S.name,career_goal:q,...S.ans},
-        predicted_school:'',predicted_majors:[],
-        all_available:[],riasec_scores:{},dominant_traits:[]
+        predicted_school:'',
+        predicted_majors:[],
+        all_available:[],
+        riasec_scores:{},
+        dominant_traits:[]
       })
     });
     const d=await rr.json();
     setTimeout(()=>{
-      aiMsg(d.recommendation||"I'm not sure about that. Please contact GJU directly.");
+      aiMsg(d.recommendation||"I'm not sure about that. Please contact GJU directly for more info.");
       S.inputOn=true;
       showTextInput();
     },500);
   }catch(e){
-    setTimeout(()=>{aiMsg(`I couldn't fetch that. Try asking something else!`);S.inputOn=true;showTextInput();},500);
+    setTimeout(()=>{aiMsg(`I couldn't fetch that right now. Try asking something else!`);S.inputOn=true;showTextInput();},500);
   }
 }
 
